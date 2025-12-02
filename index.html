@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ohio State Coach Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .osu-red { color: #BB0000; }
+        .bg-osu-red { background-color: #BB0000; }
+        .osu-grey { color: #666666; }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #BB0000;
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 flex flex-col items-center">
+
+    <div class="max-w-2xl w-full space-y-6">
+        
+        <!-- Header -->
+        <div class="text-center space-y-2">
+            <h1 class="text-3xl font-bold text-gray-900">Coach <span class="osu-red">Generator</span></h1>
+            <p class="text-gray-600 text-sm">Upload your photo to generate yourself on the Ohio State sideline.</p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="glass-panel rounded-2xl p-6 shadow-xl">
+            
+            <!-- Upload Section -->
+            <div class="space-y-4">
+                <label class="block text-sm font-medium text-gray-700">1. Upload Your Reference Photo</label>
+                <div class="flex items-center justify-center w-full">
+                    <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6" id="upload-placeholder">
+                            <svg class="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                            </svg>
+                            <p class="text-sm text-gray-500"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                            <p class="text-xs text-gray-500 mt-1">PNG, JPG (MAX. 5MB)</p>
+                        </div>
+                        <img id="preview-image" class="hidden w-full h-full object-contain rounded-lg p-2" />
+                        <input id="dropzone-file" type="file" class="hidden" accept="image/*" />
+                    </label>
+                </div>
+            </div>
+
+            <!-- Prompt Section -->
+            <div class="mt-6 space-y-2">
+                <label class="block text-sm font-medium text-gray-700">2. The Scene (Editable)</label>
+                <textarea id="prompt-input" rows="3" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm p-3 border" placeholder="Describe the scene...">Generate a photorealistic TV broadcast shot of this man as the Ohio State Head Coach. He is standing casually on the sideline of a night game. He is wearing a red Ohio State Nike quarter-zip fleece, grey coaching pants, and a headset around his neck. He is looking at a play sheet with poise and composure. Stadium lights in background. Keep his facial identity exactly as the uploaded photo.</textarea>
+            </div>
+
+            <!-- Action Button -->
+            <button id="generate-btn" class="w-full mt-6 bg-osu-red hover:bg-red-800 text-white font-bold py-3 px-4 rounded-xl shadow-lg transform transition hover:scale-[1.02] flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed">
+                <span id="btn-text">Generate Broadcast Shot</span>
+                <div id="btn-loader" class="loader ml-3 hidden"></div>
+            </button>
+
+            <!-- Error Message -->
+            <div id="error-msg" class="hidden mt-4 p-3 bg-red-100 text-red-700 text-sm rounded-lg"></div>
+
+        </div>
+
+        <!-- Result Section -->
+        <div id="result-container" class="hidden glass-panel rounded-2xl p-6 shadow-xl animate-fade-in">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">On Air Result</h3>
+            <div class="relative w-full aspect-[9/16] bg-black rounded-lg overflow-hidden group">
+                <img id="generated-image" class="w-full h-full object-cover" src="" alt="Generated Coach">
+                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                     <button onclick="downloadImage()" class="bg-white text-black px-4 py-2 rounded-full font-bold shadow-lg hover:bg-gray-200 transition">
+                        <i class="fas fa-download mr-2"></i>Download
+                    </button>
+                </div>
+            </div>
+            <div class="mt-4 flex justify-between items-center text-xs text-gray-500">
+                <span>AI Generated • 8K Res</span>
+                <span>Broadcast Camera</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const apiKey = "AIzaSyBQdt-V9QbVHBKmHiIrFZG62Z5uvyj-Gaw"; // Injected by environment
+        const fileInput = document.getElementById('dropzone-file');
+        const previewImage = document.getElementById('preview-image');
+        const uploadPlaceholder = document.getElementById('upload-placeholder');
+        const generateBtn = document.getElementById('generate-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnLoader = document.getElementById('btn-loader');
+        const resultContainer = document.getElementById('result-container');
+        const generatedImage = document.getElementById('generated-image');
+        const errorMsg = document.getElementById('error-msg');
+        const promptInput = document.getElementById('prompt-input');
+
+        let base64Image = null;
+
+        // File Upload Handling
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    base64Image = e.target.result.split(',')[1]; // Get pure base64
+                    previewImage.src = e.target.result;
+                    previewImage.classList.remove('hidden');
+                    uploadPlaceholder.classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Retry Logic
+        async function fetchWithRetry(url, options, maxRetries = 3) {
+            const delays = [1000, 2000, 4000];
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return await response.json();
+                } catch (e) {
+                    if (i === maxRetries - 1) throw e;
+                    await new Promise(r => setTimeout(r, delays[i]));
+                }
+            }
+        }
+
+        // Generate Function
+        generateBtn.addEventListener('click', async () => {
+            if (!base64Image) {
+                showError("Please upload a photo first.");
+                return;
+            }
+
+            setLoading(true);
+            hideError();
+            resultContainer.classList.add('hidden');
+
+            const prompt = promptInput.value;
+
+            try {
+                // Using gemini-2.5-flash-image-preview for Image-to-Image generation
+                // Note: The system instruction says to use this model for image editing/I2I
+                const response = await fetchWithRetry(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: prompt },
+                                    { inlineData: { mimeType: "image/png", data: base64Image } }
+                                ]
+                            }],
+                            generationConfig: {
+                                responseModalities: ["IMAGE"] 
+                            }
+                        })
+                    }
+                );
+
+                // Parse Response
+                // The API returns inlineData for images in this mode usually
+                const candidates = response.candidates;
+                if (candidates && candidates.length > 0) {
+                    const parts = candidates[0].content.parts;
+                    const imagePart = parts.find(p => p.inlineData);
+                    
+                    if (imagePart) {
+                        const imgBase64 = imagePart.inlineData.data;
+                        generatedImage.src = `data:image/png;base64,${imgBase64}`;
+                        resultContainer.classList.remove('hidden');
+                        resultContainer.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        // Fallback: check if it returned text refusing the request
+                        const textPart = parts.find(p => p.text);
+                        if (textPart) {
+                            showError("AI Message: " + textPart.text);
+                        } else {
+                            showError("No image generated. Please try a different photo or prompt.");
+                        }
+                    }
+                } else {
+                    showError("Failed to generate. The model might be busy.");
+                }
+
+            } catch (error) {
+                console.error(error);
+                showError("Error generating image. Please try again.");
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function setLoading(isLoading) {
+            generateBtn.disabled = isLoading;
+            if (isLoading) {
+                btnText.textContent = "Generating...";
+                btnLoader.classList.remove('hidden');
+            } else {
+                btnText.textContent = "Generate Broadcast Shot";
+                btnLoader.classList.add('hidden');
+            }
+        }
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMsg.classList.add('hidden');
+        }
+
+        window.downloadImage = function() {
+            const link = document.createElement('a');
+            link.download = 'ohio-state-coach.png';
+            link.href = generatedImage.src;
+            link.click();
+        }
+    </script>
+</body>
+</html>
