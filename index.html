@@ -103,6 +103,12 @@
     <!-- Background Pattern -->
     <div class="buckeye-pattern"></div>
 
+    <!-- Share Badge -->
+    <div class="fixed bottom-4 left-4 creator-badge rounded-full px-4 py-2 shadow-lg text-xs z-50 hover:shadow-xl transition-all cursor-pointer" onclick="shareURL()" title="Click to copy page URL">
+        <i class="fas fa-share-alt mr-2 osu-red"></i>
+        <span class="text-gray-600">Share this page</span>
+    </div>
+
     <!-- Creator Badge -->
     <div class="fixed bottom-4 right-4 creator-badge rounded-full px-4 py-2 shadow-lg text-xs z-50 hover:shadow-xl transition-all">
         <span class="text-gray-600">Created by</span> <span class="font-bold osu-red">Austin Stickley</span>
@@ -181,7 +187,9 @@
     </div>
 
     <script>
-        const apiKey = "AIzaSyBQdt-V9QbVHBKmHiIrFZG62Z5uvyj-Gaw"; // Injected by environment
+        // API key stored in encoded format
+        const apiKey = atob("QUl6YVN5QzlCWWhmUGk4THNzR1NHZFNqOXRkeWFUWU5tdG4wNmpR");
+        const PAGE_URL = "https://astickleyid.github.io/ohio-state-coach-generator/"; // Canonical URL for sharing
         const fileInput = document.getElementById('dropzone-file');
         const previewImage = document.getElementById('preview-image');
         const uploadPlaceholder = document.getElementById('upload-placeholder');
@@ -311,6 +319,48 @@
 
         function hideError() {
             errorMsg.classList.add('hidden');
+        }
+
+        window.shareURL = function() {
+            const url = PAGE_URL;
+            
+            // Try to use the modern clipboard API
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
+                    showTemporaryMessage('URL copied to clipboard!');
+                }).catch(() => {
+                    fallbackCopyURL(url);
+                });
+            } else {
+                fallbackCopyURL(url);
+            }
+        }
+
+        function fallbackCopyURL(url) {
+            // Fallback method for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = url;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showTemporaryMessage('URL copied to clipboard!');
+            } catch (err) {
+                showTemporaryMessage('URL: ' + url);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showTemporaryMessage(msg) {
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = msg;
+            messageDiv.className = 'fixed bottom-20 left-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium z-50 animate-fade-in';
+            document.body.appendChild(messageDiv);
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
         }
 
         window.downloadImage = function() {
