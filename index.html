@@ -188,6 +188,7 @@
 
     <script>
         const apiKey = "AIzaSyBQdt-V9QbVHBKmHiIrFZG62Z5uvyj-Gaw"; // Injected by environment
+        const PAGE_URL = "https://astickleyid.github.io/ohio-state-coach-generator/"; // Canonical URL for sharing
         const fileInput = document.getElementById('dropzone-file');
         const previewImage = document.getElementById('preview-image');
         const uploadPlaceholder = document.getElementById('upload-placeholder');
@@ -320,7 +321,7 @@
         }
 
         window.shareURL = function() {
-            const url = 'https://astickleyid.github.io/ohio-state-coach-generator/';
+            const url = PAGE_URL;
             
             // Try to use the modern clipboard API
             if (navigator.clipboard && navigator.clipboard.writeText) {
